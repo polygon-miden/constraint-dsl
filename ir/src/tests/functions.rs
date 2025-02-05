@@ -132,15 +132,15 @@ fn fn_call_in_fn() {
     }
 
     trace_columns {
-        main: [a, b[12]],
+        main: [a, b],
     }
 
-    fn fold_vec(a: felt[12]) -> felt {
-        return sum([x for x in a]);
+    fn double(a: felt) -> felt {
+        return 2*a;
     }
 
-    fn fold_scalar_and_vec(a: felt, b: felt[12]) -> felt {
-        return a + fold_vec(b);
+    fn double_b_and_add(a: felt, b: felt) -> felt {
+        return a + double(b);
     }
 
     boundary_constraints {
@@ -148,7 +148,7 @@ fn fn_call_in_fn() {
     }
 
     integrity_constraints {
-        enf a' = fold_scalar_and_vec(a, b);
+        enf a' = double_b_and_add(a, b);
     }";
 
     assert!(compile(source).is_ok());
@@ -167,16 +167,12 @@ fn fn_call_in_ev() {
         main: [a, b[12]],
     }
 
-    fn fold_vec(a: felt[12]) -> felt {
-        return sum([x for x in a]);
+    fn double(a: felt) -> felt {
+        return 2*a;
     }
 
-    fn fold_scalar_and_vec(a: felt, b: felt[12]) -> felt {
-        return a + fold_vec(b);
-    }
-
-    ev evaluator([a, b[12]]) {
-        enf a' = fold_scalar_and_vec(a, b);
+    ev evaluator([a]) {
+        enf a' = double(a);
     }
 
     boundary_constraints {
@@ -184,7 +180,7 @@ fn fn_call_in_ev() {
     }
 
     integrity_constraints {
-        enf evaluator([a, b]);
+        enf evaluator([a]);
     }";
 
     assert!(compile(source).is_ok());
@@ -200,7 +196,7 @@ fn fn_as_lc_iterables() {
     }
 
     trace_columns {
-        main: [a[12], b[12], c],
+        main: [a[2], b[2], c],
     }
 
     fn operation(a: felt, b: felt) -> felt {

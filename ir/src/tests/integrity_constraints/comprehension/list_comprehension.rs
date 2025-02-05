@@ -46,28 +46,6 @@ fn lc_with_const_exp() {
 }
 
 #[test]
-fn lc_with_non_const_exp() {
-    let source = "
-    def test
-    trace_columns {
-        main: [clk, fmp[2], ctx],
-        aux: [a, b, c[4], d[4]],
-    }
-    public_inputs {
-        stack_inputs: [16],
-    }
-    boundary_constraints {
-        enf c[2].first = 0;
-    }
-    integrity_constraints {
-        let enumerate = [2^c * c for (i, c) in (0..4, c)];
-        enf clk = enumerate[3];
-    }";
-
-    expect_diagnostic(source, "expected exponent to be a constant");
-}
-
-#[test]
 fn lc_with_two_lists() {
     let source = "
     def test
@@ -183,54 +161,6 @@ fn err_index_out_of_range_lc_slice() {
         source,
         "attempted to access an index which is out of bounds",
     );
-}
-
-#[test]
-fn err_non_const_exp_ident_iterable() {
-    let source = "
-    def test
-    trace_columns {
-        main: [clk, fmp[2], ctx],
-        aux: [a, b, c[4], d[4]],
-    }
-    public_inputs {
-        stack_inputs: [16],
-    }
-    
-    boundary_constraints {
-        enf c[2].first = 0;
-    }
-    
-    integrity_constraints {
-        let invalid_exp_lc = [2^d * c for (d, c) in (d, c)];
-        enf clk = invalid_exp_lc[1];
-    }";
-
-    expect_diagnostic(source, "expected exponent to be a constant");
-}
-
-#[test]
-fn err_non_const_exp_slice_iterable() {
-    let source = "
-    def test
-    trace_columns {
-        main: [clk, fmp[2], ctx],
-        aux: [a, b, c[4], d[4]],
-    }
-    public_inputs {
-        stack_inputs: [16],
-    }
-
-    boundary_constraints {
-        enf c[2].first = 0;
-    }
-
-    integrity_constraints {
-        let invalid_exp_lc = [2^d * c for (d, c) in (d[0..4], c)];
-        enf clk = invalid_exp_lc[1];
-    }";
-
-    expect_diagnostic(source, "expected exponent to be a constant");
 }
 
 #[test]

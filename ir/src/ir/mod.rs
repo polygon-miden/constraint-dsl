@@ -1,164 +1,109 @@
 mod constraints;
-mod degree;
-mod operation;
+mod graph;
+mod leaf;
+mod link;
+mod mir;
+mod node;
+mod nodes;
+mod owner;
 mod trace;
-mod value;
+pub extern crate derive_ir;
 
-pub use self::constraints::{ConstraintDomain, ConstraintError, ConstraintRoot, Constraints};
-pub use self::degree::IntegrityConstraintDegree;
-pub use self::operation::{FoldOperator, Operation, SpannedVariable};
-pub use self::trace::TraceAccess;
-pub use self::value::{
-    ConstantValue, MirType, MirValue, PeriodicColumnAccess, PublicInputAccess, SpannedMirValue,
-    TraceAccessBinding,
-};
+pub use constraints::{ConstraintDomain, ConstraintError, ConstraintRoot, Constraints};
+pub use derive_ir::Builder;
+pub use graph::Graph;
+pub use leaf::Leaf;
+pub use link::{BackLink, Link};
+pub use mir::Mir;
+pub use node::Node;
+pub use nodes::*;
+pub use owner::Owner;
+pub use trace::TraceAccess;
 
-use air_parser::ast::TraceSegment;
-pub use air_parser::{
-    ast::{
-        AccessType, Boundary, Identifier, PeriodicColumn, PublicInput, QualifiedIdentifier,
-        TraceSegmentId,
-    },
-    Symbol,
-};
-
-/// The default segment against which a constraint is applied is the main trace segment.
-pub const DEFAULT_SEGMENT: TraceSegmentId = 0;
-/// The auxiliary trace segment.
-pub const AUX_SEGMENT: TraceSegmentId = 1;
-/// The offset of the "current" row during constraint evaluation.
-pub const CURRENT_ROW: usize = 0;
-/// The minimum cycle length of a periodic column
-pub const MIN_CYCLE_LENGTH: usize = 2;
-
-use std::collections::BTreeMap;
-
-use miden_diagnostics::{SourceSpan, Spanned};
-
-use crate::graph::MirGraph;
-
-/// The intermediate representation of a complete AirScript program
-///
-/// This structure is produced from an [air_parser::ast::Program] that has
-/// been through semantic analysis, constant propagation, and inlining. It
-/// is equivalent to an [air_parser::ast::Program], except that it has been
-/// translated into an algebraic graph representation, on which further analysis,
-/// optimization, and code generation are performed.
-#[derive(Debug, Spanned)]
-pub struct Mir {
-    /// The name of the [air_parser::ast::Program] from which this IR was derived
-    #[span]
-    pub name: Identifier,
-
-    pub trace_columns: Vec<TraceSegment>,
-    
-    /// The periodic columns referenced by this program.
-    ///
-    /// These are taken straight from the [air_parser::ast::Program] without modification.
-    pub periodic_columns: BTreeMap<QualifiedIdentifier, PeriodicColumn>,
-    /// The public inputs referenced by this program.
-    ///
-    /// These are taken straight from the [air_parser::ast::Program] without modification.
-    pub public_inputs: BTreeMap<Identifier, PublicInput>,
-    /// The total number of elements in the random values array
-    pub num_random_values: u16,
-    /// The constraints enforced by this program, in their algebraic graph representation.
-    pub constraints: Constraints,
+/// A trait for nodes that can have children
+/// This is used with the Child trait to allow for easy traversal and manipulation of the graph
+pub trait Parent {
+    type Child;
+    fn children(&self) -> Link<Vec<Link<Self::Child>>>;
 }
-impl Default for Mir {
-    fn default() -> Self {
-        Self::new(Identifier::new(
-            SourceSpan::UNKNOWN,
-            Symbol::intern("unnamed"),
-        ))
+
+impl<T> Parent for Link<T>
+where
+    T: Parent,
+{
+    type Child = T::Child;
+    fn children(&self) -> Link<Vec<Link<Self::Child>>> {
+        self.borrow().children()
     }
 }
-impl Mir {
-    /// Create a new, empty [Mir] container
-    ///
-    /// An empty [Mir] is meaningless until it has been populated with
-    /// constraints and associated metadata. This is typically done by converting
-    /// an [air_parser::ast::Program] to this struct using the [crate::passes::AstToAir]
-    /// translation pass.
-    pub fn new(name: Identifier) -> Self {
-        Self {
-            name,
-            trace_columns: vec![],
-            periodic_columns: Default::default(),
-            public_inputs: Default::default(),
-            num_random_values: 0,
-            constraints: Default::default(),
+
+impl<T> Parent for BackLink<T>
+where
+    Link<T>: Parent,
+{
+    type Child = <Link<T> as Parent>::Child;
+    fn children(&self) -> Link<Vec<Link<Self::Child>>> {
+        match self.to_link() {
+            Some(link) => link.children(),
+            None => Link::new(Vec::new()),
         }
     }
+}
 
-    /// Returns the name of the [air_parser::ast::Program] this [Air] was derived from, as a `str`
-    #[inline]
-    pub fn name(&self) -> &str {
-        self.name.as_str()
+/// A trait for nodes that can have a parent
+/// This is used with the Parent trait to allow for easy traversal and manipulation of the graph
+pub trait Child: Clone + Into<Link<Self>> + PartialEq {
+    type Parent;
+    fn get_parents(&self) -> Vec<BackLink<Self::Parent>>;
+    fn add_parent(&mut self, parent: Link<Self::Parent>);
+    fn remove_parent(&mut self, parent: Link<Self::Parent>);
+}
+
+impl<T> Child for Link<T>
+where
+    T: Child,
+{
+    type Parent = T::Parent;
+
+    fn get_parents(&self) -> Vec<BackLink<Self::Parent>> {
+        self.borrow().get_parents()
     }
-
-    pub fn public_inputs(&self) -> impl Iterator<Item = &PublicInput> + '_ {
-        self.public_inputs.values()
+    fn add_parent(&mut self, parent: Link<Self::Parent>) {
+        self.borrow_mut().add_parent(parent)
     }
-
-    pub fn periodic_columns(&self) -> impl Iterator<Item = &PeriodicColumn> + '_ {
-        self.periodic_columns.values()
+    fn remove_parent(&mut self, parent: Link<Self::Parent>) {
+        self.borrow_mut().remove_parent(parent)
     }
+}
 
-    /// Return the number of boundary constraints
-    pub fn num_boundary_constraints(&self, trace_segment: TraceSegmentId) -> usize {
-        self.constraints.num_boundary_constraints(trace_segment)
+impl<T> Child for BackLink<T>
+where
+    Link<T>: Child,
+{
+    type Parent = <Link<T> as Child>::Parent;
+    fn get_parents(&self) -> Vec<BackLink<Self::Parent>> {
+        match self.to_link() {
+            Some(link) => link.get_parents(),
+            None => Vec::new(),
+        }
     }
-
-    /// Return the set of [ConstraintRoot] corresponding to the boundary constraints
-    pub fn boundary_constraints(&self, trace_segment: TraceSegmentId) -> &[ConstraintRoot] {
-        self.constraints.boundary_constraints(trace_segment)
+    fn add_parent(&mut self, parent: Link<Self::Parent>) {
+        if let Some(ref mut link) = self.to_link() {
+            link.add_parent(parent)
+        }
     }
-
-    /// Return the set of [ConstraintRoot] corresponding to the integrity constraints
-    pub fn integrity_constraints(&self, trace_segment: TraceSegmentId) -> &[ConstraintRoot] {
-        self.constraints.integrity_constraints(trace_segment)
+    fn remove_parent(&mut self, parent: Link<Self::Parent>) {
+        if let Some(ref mut link) = self.to_link() {
+            link.remove_parent(parent)
+        }
     }
+}
 
-    /* /// Return the set of [IntegrityConstraintDegree] corresponding to each integrity constraint
-    pub fn integrity_constraint_degrees(
-        &self,
-        trace_segment: TraceSegmentId,
-    ) -> Vec<IntegrityConstraintDegree> {
-        self.constraints.integrity_constraint_degrees(trace_segment)
-    }*/
-
-    /// Return an [Iterator] over the validity constraints for the given trace segment
-    pub fn validity_constraints(
-        &self,
-        trace_segment: TraceSegmentId,
-    ) -> impl Iterator<Item = &ConstraintRoot> + '_ {
-        self.constraints
-            .integrity_constraints(trace_segment)
-            .iter()
-            .filter(|constraint| matches!(constraint.domain(), ConstraintDomain::EveryRow))
-    }
-
-    /// Return an [Iterator] over the transition constraints for the given trace segment
-    pub fn transition_constraints(
-        &self,
-        trace_segment: TraceSegmentId,
-    ) -> impl Iterator<Item = &ConstraintRoot> + '_ {
-        self.constraints
-            .integrity_constraints(trace_segment)
-            .iter()
-            .filter(|constraint| matches!(constraint.domain(), ConstraintDomain::EveryFrame(_)))
-    }
-
-    /// Return a reference to the raw [AlgebraicGraph] corresponding to the constraints
-    #[inline]
-    pub fn constraint_graph(&self) -> &MirGraph {
-        self.constraints.graph()
-    }
-
-    /// Return a mutable reference to the raw [AlgebraicGraph] corresponding to the constraints
-    #[inline]
-    pub fn constraint_graph_mut(&mut self) -> &mut MirGraph {
-        self.constraints.graph_mut()
-    }
+/// A trait implemented by all nodes.
+/// Will be derivable later. The implementation and type-safe builder is currently manual while we tweak the design
+pub trait Builder {
+    type Empty;
+    type Full;
+    /// Create a new empty builder that exposes all fields
+    fn builder() -> Self::Empty;
 }

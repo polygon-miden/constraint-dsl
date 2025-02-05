@@ -1,17 +1,18 @@
 #[cfg(test)]
 mod tests {
-    use crate::graph::pretty;
     use crate::passes::Inlining;
-    use crate::ConstantValue;
-    use crate::Mir;
-    use crate::MirGraph;
-    use crate::MirType;
-    use crate::MirValue;
-    use crate::Node;
-    use crate::NodeIndex;
-    use crate::Operation;
-    use crate::SpannedMirValue;
     use air_pass::Pass;
+    
+    //use crate::graph::pretty;
+    //use crate::ConstantValue;
+    //use crate::ir2::Mir;
+    //use crate::MirGraph;
+    //use crate::MirType;
+    //use crate::MirValue;
+    //use crate::Node;
+    //use crate::NodeIndex;
+    //use crate::Operation;
+    //use crate::SpannedMirValue;
 
     #[test]
     fn test_inlining() {

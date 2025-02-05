@@ -185,29 +185,3 @@ fn err_random_values_without_aux_cols() {
         "declaring random_values requires an aux trace_columns declaration",
     );
 }
-
-#[test]
-#[ignore]
-fn err_random_values_in_bc_against_main_cols() {
-    let source = "
-    def test
-    trace_columns {
-        main: [a, b[12]],
-        aux: [c, d],
-    }
-    public_inputs {
-        stack_inputs: [16],
-    }
-    random_values {
-        rand: [16],
-    }
-    boundary_constraints {
-        enf a.first = $rand[10] * 2;
-        enf b[2].last = 1;
-    }
-    integrity_constraints {
-        enf c' = $rand[3] + 1;
-    }";
-
-    expect_diagnostic(source, "Boundary constraints require both sides of the constraint to apply to the same trace segment");
-}

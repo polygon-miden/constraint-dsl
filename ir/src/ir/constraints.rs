@@ -1,6 +1,6 @@
 use core::fmt;
 
-use crate::graph::{MirGraph, NodeIndex};
+use air_parser::ast::{Boundary as BoundaryKind, TraceSegmentId};
 
 use super::*;
 
@@ -34,12 +34,12 @@ pub struct Constraints {
     /// where integrity constraints are any constraints that apply to every row or every frame.
     integrity_constraints: Vec<Vec<ConstraintRoot>>,
     /// A directed acyclic graph which represents all of the constraints and their subexpressions.
-    graph: MirGraph,
+    graph: Graph,
 }
 impl Constraints {
     /// Constructs a new [Constraints] graph from the given parts
     pub const fn new(
-        graph: MirGraph,
+        graph: Graph,
         boundary_constraints: Vec<Vec<ConstraintRoot>>,
         integrity_constraints: Vec<Vec<ConstraintRoot>>,
     ) -> Self {
@@ -102,7 +102,7 @@ impl Constraints {
     pub fn insert_constraint(
         &mut self,
         trace_segment: TraceSegmentId,
-        root: NodeIndex,
+        root: Link<Op>,
         domain: ConstraintDomain,
     ) {
         let root = ConstraintRoot::new(root, domain);
@@ -121,13 +121,13 @@ impl Constraints {
 
     /// Returns the underlying [MirGraph] representing all constraints and their sub-expressions.
     #[inline]
-    pub const fn graph(&self) -> &MirGraph {
+    pub const fn graph(&self) -> &Graph {
         &self.graph
     }
 
     /// Returns a mutable reference to the underlying [MirGraph] representing all constraints and their sub-expressions.
     #[inline]
-    pub fn graph_mut(&mut self) -> &mut MirGraph {
+    pub fn graph_mut(&mut self) -> &mut Graph {
         &mut self.graph
     }
 }
@@ -137,18 +137,18 @@ impl Constraints {
 /// the domain against which the constraint should be applied.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConstraintRoot {
-    index: NodeIndex,
+    link: Link<Op>,
     domain: ConstraintDomain,
 }
 impl ConstraintRoot {
     /// Creates a new [ConstraintRoot] with the specified entry index and row offset.
-    pub const fn new(index: NodeIndex, domain: ConstraintDomain) -> Self {
-        Self { index, domain }
+    pub const fn new(link: Link<Op>, domain: ConstraintDomain) -> Self {
+        Self { link, domain }
     }
 
     /// Returns the index of the entry node of the subgraph representing the constraint.
-    pub const fn node_index(&self) -> &NodeIndex {
-        &self.index
+    pub const fn node(&self) -> &Link<Op> {
+        &self.link
     }
 
     /// Returns the [ConstraintDomain] for this constraint, which specifies the rows against which
@@ -225,11 +225,11 @@ impl ConstraintDomain {
         }
     }
 }
-impl From<Boundary> for ConstraintDomain {
-    fn from(boundary: Boundary) -> Self {
+impl From<BoundaryKind> for ConstraintDomain {
+    fn from(boundary: BoundaryKind) -> Self {
         match boundary {
-            Boundary::First => Self::FirstRow,
-            Boundary::Last => Self::LastRow,
+            BoundaryKind::First => Self::FirstRow,
+            BoundaryKind::Last => Self::LastRow,
         }
     }
 }

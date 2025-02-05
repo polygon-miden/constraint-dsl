@@ -17,4 +17,4 @@ air-pass = { package = "air-pass", path = "../pass", version = "0.1" }
 anyhow = "1.0"
 miden-diagnostics = "0.1"
 thiserror = "1.0"
-derive_graph = {path = "./derive_graph/"}
+derive-ir = { package = "derive-ir", path = "./derive-ir", version = "0.1" }

@@ -3,7 +3,9 @@ mod graph;
 mod ir;
 pub mod passes;
 #[cfg(test)]
-mod tests;
+mod tests_mir;
+#[cfg(test)]
+mod tests_wo_mir;
 
 pub use self::codegen::CodeGenerator;
 pub use self::graph::{AlgebraicGraph, Node, NodeIndex};
@@ -28,7 +30,6 @@ impl From<mir::CompileError> for CompileError {
         match err {
             mir::CompileError::Parse(err) => Self::Parse(err),
             mir::CompileError::SemanticAnalysis(err) => Self::SemanticAnalysis(err),
-            mir::CompileError::InvalidConstraint(_err) => Self::Failed,
             mir::CompileError::Failed => Self::Failed,
         }
     }

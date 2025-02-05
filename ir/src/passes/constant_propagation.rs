@@ -27,7 +27,8 @@ impl<'a> ConstantPropagation<'a> {
         Self { diagnostics }
     }
 
-    //TODO MIR: Implement constant propagation pass on MIR
+    // TODO MIR:
+    // If needed, implement constant propagation / folding pass on MIR
     // Run through every operation in the graph
     // If we can deduce the resulting value based on the constants of the operands, replace the operation itself with a constant
     fn run_visitor(&mut self, _ir: &mut MirGraph) -> ControlFlow<()> {
