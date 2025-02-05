@@ -18,9 +18,15 @@ use std::sync::Arc;
 use air_pass::Pass;
 use miden_diagnostics::{CodeMap, DiagnosticsConfig, DiagnosticsHandler, Verbosity};
 
-pub fn compile(source: &str) -> Result<crate::Air, ()> {
+#[derive(Clone, Copy, Debug)]
+pub enum Pipeline {
+    WithMIR,
+    WithoutMIR,
+}
+
+pub fn compile(source: &str, pipeline: Pipeline) -> Result<crate::Air, ()> {
     let compiler = Compiler::default();
-    match compiler.compile(source) {
+    match compiler.compile(source, pipeline) {
         Ok(air) => Ok(air),
         Err(err) => {
             compiler.diagnostics.emit(err);
@@ -31,9 +37,9 @@ pub fn compile(source: &str) -> Result<crate::Air, ()> {
 }
 
 #[track_caller]
-pub fn expect_diagnostic(source: &str, expected: &str) {
+pub fn expect_diagnostic(source: &str, expected: &str, pipeline: Pipeline) {
     let compiler = Compiler::default();
-    let err = match compiler.compile(source) {
+    let err = match compiler.compile(source, pipeline) {
         Ok(ref ast) => {
             panic!("expected compilation to fail, got {:#?}", ast);
         }
@@ -46,8 +52,8 @@ pub fn expect_diagnostic(source: &str, expected: &str) {
     }
     assert!(
         found,
-        "expected diagnostic output to contain the string: '{}'",
-        expected
+        "With pipeline {:?}, expected diagnostic output to contain the string: '{}'",
+        pipeline, expected
     );
 }
 
@@ -83,22 +89,31 @@ impl Compiler {
         }
     }
 
-    pub fn compile(&self, source: &str) -> Result<crate::Air, CompileError> {
-        air_parser::parse(&self.diagnostics, self.codemap.clone(), source)
-            .map_err(CompileError::Parse)
-            .and_then(|ast| {
-                /*let mut pipeline =
-                air_parser::transforms::ConstantPropagation::new(&self.diagnostics)
-                    .chain(air_parser::transforms::Inlining::new(&self.diagnostics))
-                    .chain(crate::passes::AstToAir::new(&self.diagnostics));*/
-                let mut pipeline =
-                    air_parser::transforms::ConstantPropagation::new(&self.diagnostics)
-                        .chain(mir::passes::AstToMir::new(&self.diagnostics))
-                        .chain(mir::passes::Inlining::new(&self.diagnostics))
-                        .chain(mir::passes::Unrolling::new(&self.diagnostics))
-                        .chain(crate::passes::MirToAir::new(&self.diagnostics));
-                pipeline.run(ast)
-            })
+    pub fn compile(&self, source: &str, pipeline: Pipeline) -> Result<crate::Air, CompileError> {
+        match pipeline {
+            Pipeline::WithMIR => air_parser::parse(&self.diagnostics, self.codemap.clone(), source)
+                .map_err(CompileError::Parse)
+                .and_then(|ast| {
+                    let mut pipeline =
+                        air_parser::transforms::ConstantPropagation::new(&self.diagnostics)
+                            .chain(mir::passes::AstToMir::new(&self.diagnostics))
+                            .chain(mir::passes::Inlining::new(&self.diagnostics))
+                            .chain(mir::passes::Unrolling::new(&self.diagnostics))
+                            .chain(crate::passes::MirToAir::new(&self.diagnostics));
+                    pipeline.run(ast)
+                }),
+            Pipeline::WithoutMIR => {
+                air_parser::parse(&self.diagnostics, self.codemap.clone(), source)
+                    .map_err(CompileError::Parse)
+                    .and_then(|ast| {
+                        let mut pipeline =
+                            air_parser::transforms::ConstantPropagation::new(&self.diagnostics)
+                                .chain(air_parser::transforms::Inlining::new(&self.diagnostics))
+                                .chain(crate::passes::AstToAir::new(&self.diagnostics));
+                        pipeline.run(ast)
+                    })
+            }
+        }
     }
 }
 

@@ -3,9 +3,7 @@ mod graph;
 mod ir;
 pub mod passes;
 #[cfg(test)]
-mod tests_mir;
-#[cfg(test)]
-mod tests_wo_mir;
+mod tests;
 
 pub use self::codegen::CodeGenerator;
 pub use self::graph::{AlgebraicGraph, Node, NodeIndex};

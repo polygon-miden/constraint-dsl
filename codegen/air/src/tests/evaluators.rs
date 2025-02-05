@@ -1,4 +1,4 @@
-use super::{compile, expect_diagnostic};
+use super::{compile, expect_diagnostic, Pipeline};
 
 #[test]
 fn simple_evaluator() {
@@ -24,7 +24,8 @@ fn simple_evaluator() {
         enf advance_clock([clk]);
     }";
 
-    assert!(compile(source).is_ok());
+    assert!(compile(source, Pipeline::WithoutMIR).is_ok());
+    assert!(compile(source, Pipeline::WithMIR).is_ok());
 }
 
 #[test]
@@ -52,7 +53,8 @@ fn evaluator_with_variables() {
         enf advance_clock([clk]);
     }";
 
-    assert!(compile(source).is_ok());
+    assert!(compile(source, Pipeline::WithoutMIR).is_ok());
+    assert!(compile(source, Pipeline::WithMIR).is_ok());
 }
 
 #[test]
@@ -82,7 +84,8 @@ fn evaluator_with_main_and_aux_cols() {
         enf enforce_constraints([clk], [a, b]);
     }";
 
-    assert!(compile(source).is_ok());
+    assert!(compile(source, Pipeline::WithoutMIR).is_ok());
+    assert!(compile(source, Pipeline::WithMIR).is_ok());
 }
 
 #[test]
@@ -110,7 +113,8 @@ fn ev_call_with_aux_only() {
         enf enforce_a([], [a, b]);
     }";
 
-    assert!(compile(source).is_ok());
+    assert!(compile(source, Pipeline::WithoutMIR).is_ok());
+    assert!(compile(source, Pipeline::WithMIR).is_ok());
 }
 
 #[test]
@@ -141,7 +145,8 @@ fn ev_call_inside_evaluator_with_main() {
         enf enforce_all_constraints([clk]);
     }";
 
-    assert!(compile(source).is_ok());
+    assert!(compile(source, Pipeline::WithoutMIR).is_ok());
+    assert!(compile(source, Pipeline::WithMIR).is_ok());
 }
 
 #[test]
@@ -178,7 +183,8 @@ fn ev_call_inside_evaluator_with_aux() {
         enf enforce_all_constraints([clk], [a, b]);
     }";
 
-    assert!(compile(source).is_ok());
+    assert!(compile(source, Pipeline::WithoutMIR).is_ok());
+    assert!(compile(source, Pipeline::WithMIR).is_ok());
 }
 
 #[test]
@@ -205,7 +211,8 @@ fn ev_fn_call_with_column_group() {
         enf clk_selectors([s, clk]);
     }";
 
-    assert!(compile(source).is_ok());
+    assert!(compile(source, Pipeline::WithoutMIR).is_ok());
+    assert!(compile(source, Pipeline::WithMIR).is_ok());
 }
 
 #[test]
@@ -233,5 +240,14 @@ fn err_ev_fn_call_wrong_segment_columns() {
         enf is_binary([c]);
     }";
 
-    expect_diagnostic(source, "callee expects columns from the $main trace");
+    expect_diagnostic(
+        source,
+        "callee expects columns from the $main trace",
+        Pipeline::WithoutMIR,
+    );
+    expect_diagnostic(
+        source,
+        "callee expects columns from the $main trace",
+        Pipeline::WithMIR,
+    );
 }

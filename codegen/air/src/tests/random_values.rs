@@ -1,4 +1,4 @@
-use super::{compile, expect_diagnostic};
+use super::{compile, expect_diagnostic, Pipeline};
 
 #[test]
 fn random_values_indexed_access() {
@@ -22,7 +22,8 @@ fn random_values_indexed_access() {
         enf c' = $rand[3] + 1;
     }";
 
-    assert!(compile(source).is_ok());
+    assert!(compile(source, Pipeline::WithoutMIR).is_ok());
+    assert!(compile(source, Pipeline::WithMIR).is_ok());
 }
 
 #[test]
@@ -47,7 +48,8 @@ fn random_values_custom_name() {
         enf c' = $alphas[3] + 1;
     }";
 
-    assert!(compile(source).is_ok());
+    assert!(compile(source, Pipeline::WithoutMIR).is_ok());
+    assert!(compile(source, Pipeline::WithMIR).is_ok());
 }
 
 #[test]
@@ -72,7 +74,8 @@ fn random_values_named_access() {
         enf c' = m + n[2] + $rand[1];
     }";
 
-    assert!(compile(source).is_ok());
+    assert!(compile(source, Pipeline::WithoutMIR).is_ok());
+    assert!(compile(source, Pipeline::WithMIR).is_ok());
 }
 
 #[test]
@@ -100,6 +103,12 @@ fn err_random_values_out_of_bounds_no_bindings() {
     expect_diagnostic(
         source,
         "attempted to access an index which is out of bounds",
+        Pipeline::WithoutMIR,
+    );
+    expect_diagnostic(
+        source,
+        "attempted to access an index which is out of bounds",
+        Pipeline::WithMIR,
     );
 }
 
@@ -128,6 +137,12 @@ fn err_random_values_out_of_bounds_binding_ref() {
     expect_diagnostic(
         source,
         "attempted to access an index which is out of bounds",
+        Pipeline::WithoutMIR,
+    );
+    expect_diagnostic(
+        source,
+        "attempted to access an index which is out of bounds",
+        Pipeline::WithMIR,
     );
 }
 
@@ -156,6 +171,12 @@ fn err_random_values_out_of_bounds_global_ref() {
     expect_diagnostic(
         source,
         "attempted to access an index which is out of bounds",
+        Pipeline::WithoutMIR,
+    );
+    expect_diagnostic(
+        source,
+        "attempted to access an index which is out of bounds",
+        Pipeline::WithMIR,
     );
 }
 
@@ -183,6 +204,12 @@ fn err_random_values_without_aux_cols() {
     expect_diagnostic(
         source,
         "declaring random_values requires an aux trace_columns declaration",
+        Pipeline::WithoutMIR,
+    );
+    expect_diagnostic(
+        source,
+        "declaring random_values requires an aux trace_columns declaration",
+        Pipeline::WithMIR,
     );
 }
 
@@ -208,5 +235,6 @@ fn err_random_values_in_bc_against_main_cols() {
         enf c' = $rand[3] + 1;
     }";
 
-    expect_diagnostic(source, "Boundary constraints require both sides of the constraint to apply to the same trace segment");
+    expect_diagnostic(source, "Boundary constraints require both sides of the constraint to apply to the same trace segment", Pipeline::WithoutMIR);
+    expect_diagnostic(source, "Boundary constraints require both sides of the constraint to apply to the same trace segment", Pipeline::WithMIR);
 }

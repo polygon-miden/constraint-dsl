@@ -1,4 +1,4 @@
-use super::{compile, expect_diagnostic};
+use super::{compile, expect_diagnostic, Pipeline};
 
 #[test]
 fn boundary_constraints() {
@@ -18,7 +18,8 @@ fn boundary_constraints() {
         enf clk' = clk + 1;
     }";
 
-    assert!(compile(source).is_ok());
+    assert!(compile(source, Pipeline::WithoutMIR).is_ok());
+    assert!(compile(source, Pipeline::WithMIR).is_ok());
 }
 
 #[test]
@@ -39,7 +40,16 @@ fn err_bc_duplicate_first() {
         enf clk' = clk + 1;
     }";
 
-    expect_diagnostic(source, "overlapping boundary constraints");
+    expect_diagnostic(
+        source,
+        "overlapping boundary constraints",
+        Pipeline::WithoutMIR,
+    );
+    expect_diagnostic(
+        source,
+        "overlapping boundary constraints",
+        Pipeline::WithMIR,
+    );
 }
 
 #[test]
@@ -60,5 +70,14 @@ fn err_bc_duplicate_last() {
         enf clk' = clk + 1;
     }";
 
-    expect_diagnostic(source, "overlapping boundary constraints");
+    expect_diagnostic(
+        source,
+        "overlapping boundary constraints",
+        Pipeline::WithoutMIR,
+    );
+    expect_diagnostic(
+        source,
+        "overlapping boundary constraints",
+        Pipeline::WithMIR,
+    );
 }

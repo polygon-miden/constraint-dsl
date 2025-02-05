@@ -1,4 +1,4 @@
-use super::expect_diagnostic;
+use super::{expect_diagnostic, Pipeline};
 
 #[test]
 fn invalid_vector_access_in_boundary_constraint() {
@@ -24,6 +24,12 @@ fn invalid_vector_access_in_boundary_constraint() {
     expect_diagnostic(
         source,
         "attempted to access an index which is out of bounds",
+        Pipeline::WithoutMIR,
+    );
+    expect_diagnostic(
+        source,
+        "attempted to access an index which is out of bounds",
+        Pipeline::WithMIR,
     );
 }
 
@@ -51,6 +57,12 @@ fn invalid_matrix_row_access_in_boundary_constraint() {
     expect_diagnostic(
         source,
         "attempted to access an index which is out of bounds",
+        Pipeline::WithoutMIR,
+    );
+    expect_diagnostic(
+        source,
+        "attempted to access an index which is out of bounds",
+        Pipeline::WithMIR,
     );
 }
 
@@ -78,6 +90,12 @@ fn invalid_matrix_column_access_in_boundary_constraint() {
     expect_diagnostic(
         source,
         "attempted to access an index which is out of bounds",
+        Pipeline::WithoutMIR,
+    );
+    expect_diagnostic(
+        source,
+        "attempted to access an index which is out of bounds",
+        Pipeline::WithMIR,
     );
 }
 
@@ -105,6 +123,12 @@ fn invalid_vector_access_in_integrity_constraint() {
     expect_diagnostic(
         source,
         "attempted to access an index which is out of bounds",
+        Pipeline::WithoutMIR,
+    );
+    expect_diagnostic(
+        source,
+        "attempted to access an index which is out of bounds",
+        Pipeline::WithMIR,
     );
 }
 
@@ -132,6 +156,12 @@ fn invalid_matrix_row_access_in_integrity_constraint() {
     expect_diagnostic(
         source,
         "attempted to access an index which is out of bounds",
+        Pipeline::WithoutMIR,
+    );
+    expect_diagnostic(
+        source,
+        "attempted to access an index which is out of bounds",
+        Pipeline::WithMIR,
     );
 }
 
@@ -159,5 +189,11 @@ fn invalid_matrix_column_access_in_integrity_constraint() {
     expect_diagnostic(
         source,
         "attempted to access an index which is out of bounds",
+        Pipeline::WithoutMIR,
+    );
+    expect_diagnostic(
+        source,
+        "attempted to access an index which is out of bounds",
+        Pipeline::WithMIR,
     );
 }
