@@ -2,33 +2,24 @@ mod inlining;
 mod translate;
 mod unrolling;
 mod visitor;
-
-pub use self::inlining::Inlining;
-pub use self::translate::AstToMir;
-pub use self::unrolling::Unrolling;
+pub use inlining::Inlining;
+pub use translate::AstToMir;
+pub use unrolling::Unrolling;
+// Note: ConstantPropagation and ValueNumbering are not implemented yet in the MIR
+//mod constant_propagation;
+//mod value_numbering;
+//pub use constant_propagation::ConstantPropagation;
+//pub use value_numbering::ValueNumbering;
 
 use std::collections::HashMap;
 use std::ops::Deref;
 
-use air_pass::Pass;
 use miden_diagnostics::Spanned;
 
 use crate::ir::{
     Accessor, Add, Boundary, Call, Enf, Exp, Fold, For, If, Link, Matrix, Mul, Node, Op, Owner,
     Parameter, Parent, Sub, Value, Vector,
 };
-
-pub struct DumpAst;
-impl Pass for DumpAst {
-    type Input<'a> = air_parser::ast::Program;
-    type Output<'a> = air_parser::ast::Program;
-    type Error = air_parser::SemanticAnalysisError;
-
-    fn run<'a>(&mut self, input: Self::Input<'a>) -> Result<Self::Output<'a>, Self::Error> {
-        println!("{}", &input);
-        Ok(input)
-    }
-}
 
 /// Helper to duplicate a MIR node and its children recursively
 /// It should be used when we want to reference the same node multiple times in the MIR graph (e.g. referencing let bound variables)
