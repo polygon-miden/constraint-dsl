@@ -27,6 +27,6 @@ pub use mul::Mul;
 pub use sub::Sub;
 pub use value::{
     ConstantValue, MirType, MirValue, PeriodicColumnAccess, PublicInputAccess, SpannedMirValue,
-    TraceAccessBinding, Value,
+    TraceAccess, TraceAccessBinding, Value,
 };
 pub use vector::Vector;

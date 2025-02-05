@@ -1,7 +1,7 @@
-use air_parser::ast::{self, Identifier, QualifiedIdentifier, TraceSegmentId};
+use air_parser::ast::{self, Identifier, QualifiedIdentifier, TraceColumnIndex, TraceSegmentId};
 use miden_diagnostics::{SourceSpan, Spanned};
 
-use crate::ir::{BackLink, Builder, Child, Link, Node, Op, Owner, TraceAccess};
+use crate::ir::{BackLink, Builder, Child, Link, Node, Op, Owner};
 
 /// Represents a scalar value in the [MIR]
 ///
@@ -39,6 +39,32 @@ pub enum ConstantValue {
     Felt(u64),
     Vector(Vec<u64>),
     Matrix(Vec<Vec<u64>>),
+}
+
+/// [TraceAccess] is like [SymbolAccess], but is used to describe an access to a specific trace column or columns.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct TraceAccess {
+    /// The trace segment being accessed
+    pub segment: TraceSegmentId,
+    /// The index of the first column at which the access begins
+    pub column: TraceColumnIndex,
+    /// The offset from the current row.
+    ///
+    /// Defaults to 0, which indicates no offset/the current row.
+    ///
+    /// For example, if accessing a trace column with `a'`, where `a` is bound to a single column,
+    /// the row offset would be `1`, as the `'` modifier indicates the "next" row.
+    pub row_offset: usize,
+}
+impl TraceAccess {
+    /// Creates a new [TraceAccess].
+    pub const fn new(segment: TraceSegmentId, column: TraceColumnIndex, row_offset: usize) -> Self {
+        Self {
+            segment,
+            column,
+            row_offset,
+        }
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Hash)]

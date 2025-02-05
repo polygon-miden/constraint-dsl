@@ -1,14 +1,11 @@
-mod constraints;
 mod graph;
 mod link;
 mod mir;
 mod node;
 mod nodes;
 mod owner;
-mod trace;
 pub extern crate derive_ir;
 
-pub use constraints::{ConstraintDomain, ConstraintError, ConstraintRoot, Constraints};
 pub use derive_ir::Builder;
 pub use graph::Graph;
 pub use link::{BackLink, Link};
@@ -16,7 +13,6 @@ pub use mir::Mir;
 pub use node::Node;
 pub use nodes::*;
 pub use owner::Owner;
-pub use trace::TraceAccess;
 
 /// A trait for nodes that can have children
 /// This is used with the Child trait to allow for easy traversal and manipulation of the graph

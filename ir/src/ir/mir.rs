@@ -1,16 +1,6 @@
-/*
-pub use self::constraints::{ConstraintDomain, ConstraintError, ConstraintRoot, Constraints};
-pub use self::degree::IntegrityConstraintDegree;
-pub use self::operation::{FoldOperator, Operation, SpannedVariable};
-pub use self::trace::TraceAccess;
-pub use self::value::{
-    ConstantValue, MirType, MirValue, PeriodicColumnAccess, PublicInputAccess, SpannedMirValue,
-    TraceAccessBinding,
-};*/
-
 use air_parser::ast::TraceSegment;
 pub use air_parser::{
-    ast::{Identifier, PeriodicColumn, PublicInput, QualifiedIdentifier, TraceSegmentId},
+    ast::{Identifier, PeriodicColumn, PublicInput, QualifiedIdentifier},
     Symbol,
 };
 
@@ -19,7 +9,6 @@ use std::collections::BTreeMap;
 use miden_diagnostics::{SourceSpan, Spanned};
 
 use super::Graph;
-use crate::ir::{ConstraintDomain, ConstraintRoot, Constraints};
 
 /// The intermediate representation of a complete AirScript program
 ///
@@ -46,8 +35,8 @@ pub struct Mir {
     pub public_inputs: BTreeMap<Identifier, PublicInput>,
     /// The total number of elements in the random values array
     pub num_random_values: u16,
-    /// The constraints enforced by this program, in their algebraic graph representation.
-    pub constraints: Constraints,
+    /// The constraints of the program, represented as MIR Nodes
+    graph: Graph,
 }
 impl Default for Mir {
     fn default() -> Self {
@@ -71,7 +60,7 @@ impl Mir {
             periodic_columns: Default::default(),
             public_inputs: Default::default(),
             num_random_values: 0,
-            constraints: Default::default(),
+            graph: Default::default(),
         }
     }
 
@@ -89,55 +78,15 @@ impl Mir {
         self.periodic_columns.values()
     }
 
-    /// Return the number of boundary constraints
-    pub fn num_boundary_constraints(&self, trace_segment: TraceSegmentId) -> usize {
-        self.constraints.num_boundary_constraints(trace_segment)
-    }
-
-    /// Return the set of [ConstraintRoot] corresponding to the boundary constraints
-    pub fn boundary_constraints(&self, trace_segment: TraceSegmentId) -> &[ConstraintRoot] {
-        self.constraints.boundary_constraints(trace_segment)
-    }
-
-    /* /// Return the set of [IntegrityConstraintDegree] corresponding to each integrity constraint
-    pub fn integrity_constraint_degrees(
-        &self,
-        trace_segment: TraceSegmentId,
-    ) -> Vec<IntegrityConstraintDegree> {
-        self.constraints.integrity_constraint_degrees(trace_segment)
-    }*/
-
-    /// Return an [Iterator] over the validity constraints for the given trace segment
-    pub fn validity_constraints(
-        &self,
-        trace_segment: TraceSegmentId,
-    ) -> impl Iterator<Item = &ConstraintRoot> + '_ {
-        self.constraints
-            .integrity_constraints(trace_segment)
-            .iter()
-            .filter(|constraint| matches!(constraint.domain(), ConstraintDomain::EveryRow))
-    }
-
-    /// Return an [Iterator] over the transition constraints for the given trace segment
-    pub fn transition_constraints(
-        &self,
-        trace_segment: TraceSegmentId,
-    ) -> impl Iterator<Item = &ConstraintRoot> + '_ {
-        self.constraints
-            .integrity_constraints(trace_segment)
-            .iter()
-            .filter(|constraint| matches!(constraint.domain(), ConstraintDomain::EveryFrame(_)))
-    }
-
     /// Return a reference to the raw [AlgebraicGraph] corresponding to the constraints
     #[inline]
     pub fn constraint_graph(&self) -> &Graph {
-        self.constraints.graph()
+        &self.graph
     }
 
     /// Return a mutable reference to the raw [AlgebraicGraph] corresponding to the constraints
     #[inline]
     pub fn constraint_graph_mut(&mut self) -> &mut Graph {
-        self.constraints.graph_mut()
+        &mut self.graph
     }
 }
