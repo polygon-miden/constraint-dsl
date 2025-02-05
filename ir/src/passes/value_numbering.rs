@@ -1,35 +1,63 @@
-use std::ops::ControlFlow;
-
 use air_pass::Pass;
 use miden_diagnostics::DiagnosticsHandler;
 
-use crate::MirGraph;
+use super::visitor::Visitor;
+use crate::{
+    ir::{Link, Mir, Node},
+    CompileError,
+};
 
+/// TODO MIR:
+/// If needed, implement value numbering pass on MIR
+/// See https://en.wikipedia.org/wiki/Value_numbering
+///   
 pub struct ValueNumbering<'a> {
     #[allow(unused)]
     diagnostics: &'a DiagnosticsHandler,
+    work_stack: Vec<Link<Node>>,
 }
-impl<'p> Pass for ValueNumbering<'p> {
-    type Input<'a> = MirGraph;
-    type Output<'a> = MirGraph;
-    type Error = ();
+
+impl Pass for ValueNumbering<'_> {
+    type Input<'a> = Mir;
+    type Output<'a> = Mir;
+    type Error = CompileError;
 
     fn run<'a>(&mut self, mut ir: Self::Input<'a>) -> Result<Self::Output<'a>, Self::Error> {
-        match self.run_visitor(&mut ir) {
-            ControlFlow::Continue(()) => Ok(ir),
-            ControlFlow::Break(err) => Err(err),
-        }
+        Visitor::run(self, ir.constraint_graph_mut())?;
+        Ok(ir)
     }
 }
 
 impl<'a> ValueNumbering<'a> {
+    #[allow(unused)]
     pub fn new(diagnostics: &'a DiagnosticsHandler) -> Self {
-        Self { diagnostics }
+        Self {
+            diagnostics,
+            work_stack: vec![],
+        }
     }
+}
 
-    //TODO MIR: Implement value numbering pass on MIR
-    // See https://en.wikipedia.org/wiki/Value_numbering
-    fn run_visitor(&mut self, _ir: &mut MirGraph) -> ControlFlow<()> {
-        ControlFlow::Continue(())
+impl Visitor for ValueNumbering<'_> {
+    fn work_stack(&mut self) -> &mut Vec<Link<Node>> {
+        &mut self.work_stack
+    }
+    fn root_nodes_to_visit(
+        &self,
+        graph: &crate::ir::Graph,
+    ) -> Vec<crate::ir::Link<crate::ir::Node>> {
+        let boundary_constraints_roots_ref = graph.boundary_constraints_roots.borrow();
+        let integrity_constraints_roots_ref = graph.integrity_constraints_roots.borrow();
+        let combined_roots = boundary_constraints_roots_ref
+            .clone()
+            .into_iter()
+            .map(|bc| bc.as_node())
+            .chain(
+                integrity_constraints_roots_ref
+                    .clone()
+                    .into_iter()
+                    .map(|ic| ic.as_node()),
+            );
+        combined_roots.collect()
     }
 }
