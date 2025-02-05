@@ -1,6 +1,5 @@
 mod constraints;
 mod graph;
-mod leaf;
 mod link;
 mod mir;
 mod node;
@@ -12,7 +11,6 @@ pub extern crate derive_ir;
 pub use constraints::{ConstraintDomain, ConstraintError, ConstraintRoot, Constraints};
 pub use derive_ir::Builder;
 pub use graph::Graph;
-pub use leaf::Leaf;
 pub use link::{BackLink, Link};
 pub use mir::Mir;
 pub use node::Node;
