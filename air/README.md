@@ -6,9 +6,7 @@ The purpose of the `AirIR` is to provide a simple and accurate representation of
 
 ## Generating the AirIR
 
-Generate an `AirIR` from an AirScript AST (the output of the AirScript parser) using the `new` method. The `new` method will return a new `AirIR` or an `Error` of type `SemanticError` if it encounters any errors while processing the AST.
-
-The `new` method will first iterate through the source sections that contain declarations to build a symbol table with constants, trace columns, public inputs, periodic columns and random values. It will return a `SemanticError` if it encounters a duplicate, incorrect, or missing declaration. Once the symbol table is built, the constraints and intermediate variables in the `boundary_constraints` and `integrity_constraints` sections of the AST are processed. Finally, `new` returns a Result containing the `AirIR` or a `SemanticError`.
+Generate an `AirIR` from either an AirScript AST (the output of the AirScript parser) or a MIR (the Middle Intermediate Representation for AirScript).
 
 Example usage:
 
@@ -16,8 +14,20 @@ Example usage:
 // parse the source string to a Result containing the AST or an Error
 let ast = parse(source.as_str()).expect("Parsing failed");
 
-// process the AST to get a Result containing the AirIR or an Error
-let ir = AirIR::new(&ast)
+// Create the compilation pipeline needed to translate the AST to AIR
+let pipeline_with_mir = air_parser::transforms::ConstantPropagation::new(&diagnostics)
+  .chain(mir::passes::AstToMir::new(&diagnostics))
+  .chain(mir::passes::Inlining::new(&diagnostics))
+  .chain(mir::passes::Unrolling::new(&diagnostics))
+  .chain(air_ir::passes::MirToAir::new(&diagnostics));
+
+let pipeline_without_mir = air_parser::transforms::ConstantPropagation::new(&diagnostics)
+  .chain(air_parser::transforms::Inlining::new(&diagnostics))
+  .chain(air_ir::passes::AstToAir::new(&diagnostics));
+  
+// process the AST to get a Result containing the AIR or a CompileError
+let air_from_ast = pipeline_without_mir.run(ast)
+let air_from_mir = pipeline_with_mir.run(ast)
 ```
 
 ## AirIR

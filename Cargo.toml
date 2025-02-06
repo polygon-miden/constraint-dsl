@@ -3,8 +3,8 @@ members = [
     "air-script",
     "parser",
     "pass",
-    "ir",
-    "codegen/air",
+    "mir",
+    "air",
     "codegen/masm",
     "codegen/winterfell",
 ]

@@ -1,12 +1,12 @@
-# Intermediate Representation (IR)
+# Middle Intermediate Representation (MIR)
 
-This crate contains the intermediate representation for AirScript, `AirIR`.
+This crate contains the middle intermediate representation for AirScript, `MIR`.
 
-The purpose of the `AirIR` is to provide a simple and accurate representation of an AIR that allows for optimization and translation to constraint evaluator code in a variety of target languages.
+The purpose of the `MIR` is to provide a representation of an AirScript program that allows for optimization and translation to `AirIR` containing the `AlgebraicGraph`
 
-## Generating the AirIR
+## Generating the MIR
 
-Generate an `AirIR` from an AirScript AST (the output of the AirScript parser) using the `new` method. The `new` method will return a new `AirIR` or an `Error` of type `SemanticError` if it encounters any errors while processing the AST.
+Generate an `MIR` from an AirScript AST (the output of the AirScript parser) using the `new` method. The `new` method will return a new `MIR` or an `Error` of type `SemanticError` if it encounters any errors while processing the AST.
 
 The `new` method will first iterate through the source sections that contain declarations to build a symbol table with constants, trace columns, public inputs, periodic columns and random values. It will return a `SemanticError` if it encounters a duplicate, incorrect, or missing declaration. Once the symbol table is built, the constraints and intermediate variables in the `boundary_constraints` and `integrity_constraints` sections of the AST are processed. Finally, `new` returns a Result containing the `AirIR` or a `SemanticError`.
 
@@ -16,8 +16,12 @@ Example usage:
 // parse the source string to a Result containing the AST or an Error
 let ast = parse(source.as_str()).expect("Parsing failed");
 
-// process the AST to get a Result containing the AirIR or an Error
-let ir = AirIR::new(&ast)
+// Create the compilation pipeline needed to translate the AST to MIR
+let pipeline = air_parser::transforms::ConstantPropagation::new(&diagnostics)
+  .chain(mir::passes::AstToMir::new(&diagnostics))
+
+// process the AST to get a Result containing the MIR or a CompileError
+let mir = pipeline.run(ast)
 ```
 
 ## AirIR
