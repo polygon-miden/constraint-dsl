@@ -5,6 +5,15 @@ use super::{Link, Owner, Parent, Root};
 use std::ops::Deref;
 
 /// All the nodes that can be in the MIR Graph
+/// Combines all [Root] and [Op] variants
+/// The [Node] enum does not own it's inner struct to avoid reference cycles,
+/// and hence uses a [BackLink] to refer to the inner [Op] or [Root]
+/// It is meant to be used as a singleton, stored in the inner struct of [Op] and [Root],
+/// so it can be updated to the correct variant when the inner struct is updated
+/// Note: The [None] variant is used to represent a [Node] that:
+/// - is not yet initialized
+/// - no longer exists (due to its ref-count dropping to 0).
+///   We refer to those as "stale" nodes.
 #[derive(Clone, Eq, Debug, Spanned)]
 pub enum Node {
     Function(BackLink<Root>),
@@ -35,6 +44,7 @@ impl Default for Node {
 
 impl PartialEq for Node {
     fn eq(&self, other: &Self) -> bool {
+        // We first convert the [BackLink] to an [Option<Link>] and compare those
         match (self, other) {
             (Node::Function(lhs), Node::Function(rhs)) => lhs.to_link() == rhs.to_link(),
             (Node::Evaluator(lhs), Node::Evaluator(rhs)) => lhs.to_link() == rhs.to_link(),
@@ -61,6 +71,7 @@ impl PartialEq for Node {
 
 impl std::hash::Hash for Node {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        // We first convert the [BackLink] to an [Option<Link>] and hash those
         match self {
             Node::Function(f) => f.to_link().hash(state),
             Node::Evaluator(e) => e.to_link().hash(state),
@@ -79,7 +90,7 @@ impl std::hash::Hash for Node {
             Node::Accessor(a) => a.to_link().hash(state),
             Node::Parameter(p) => p.to_link().hash(state),
             Node::Value(v) => v.to_link().hash(state),
-            Node::None(s) => s.hash(state),
+            Node::None(_) => (),
         }
     }
 }
@@ -153,7 +164,7 @@ impl Child for Node {
             Node::Accessor(a) => a.add_parent(parent),
             Node::Parameter(p) => p.add_parent(parent),
             Node::Value(v) => v.add_parent(parent),
-            Node::None(_) => {}
+            Node::None(_) => (),
         }
     }
     fn remove_parent(&mut self, parent: Link<Self::Parent>) {
@@ -175,12 +186,14 @@ impl Child for Node {
             Node::Accessor(a) => a.remove_parent(parent),
             Node::Parameter(p) => p.remove_parent(parent),
             Node::Value(v) => v.remove_parent(parent),
-            Node::None(_) => {}
+            Node::None(_) => (),
         }
     }
 }
 
 impl Link<Node> {
+    /// Update the current [Node] to the right variant of the new inner [Op] or [Root]
+    /// Note: Only meant to be used internally
     pub fn update_variant(&self) {
         let to_update;
         if let Some(op_inner_val) = self.as_op() {
@@ -215,12 +228,15 @@ impl Link<Node> {
         *self.borrow_mut() = to_update;
     }
 
+    /// Check if the [Node]'s inner [Op] or [Root] still exists
     pub fn is_stale(&self) -> bool {
         match self.as_root() {
             Some(_) => false,
             None => self.as_op().is_none(),
         }
     }
+    /// Debug the current [Node], shows the inner [Op] or [Root] variant,
+    /// as opposed to the default debug implementation which hides [BackLink]s
     pub fn debug(&self) -> String {
         match self.as_root() {
             Some(root) => format!("Node::Root({})", root.debug()),
@@ -230,6 +246,8 @@ impl Link<Node> {
             },
         }
     }
+    /// Try getting the current [Node]'s [Root] variant
+    /// Returns None if the [Node] is an [Op] variant or is stale
     pub fn as_root(&self) -> Option<Link<Root>> {
         match self.borrow().deref() {
             Node::Function(f) => f.to_link(),
@@ -252,6 +270,8 @@ impl Link<Node> {
             Node::None(_) => None,
         }
     }
+    /// Try getting the current [Node]'s [Op] variant
+    /// Returns None if the [Node] is a [Root] variant or is stale
     pub fn as_op(&self) -> Option<Link<Op>> {
         match self.borrow().deref() {
             Node::Function(_) => None,
@@ -274,6 +294,8 @@ impl Link<Node> {
             Node::None(_) => None,
         }
     }
+    /// Try getting the current [Node]'s [Owner] variant
+    /// returns None if the [Node] is stale or is not a [Parent]
     pub fn as_owner(&self) -> Option<Link<Owner>> {
         match self.as_root() {
             Some(root) => Some(root.as_owner()),

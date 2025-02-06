@@ -13,8 +13,8 @@ use super::Graph;
 /// The intermediate representation of a complete AirScript program
 ///
 /// This structure is produced from an [air_parser::ast::Program] that has
-/// been through semantic analysis, constant propagation, and inlining. It
-/// is equivalent to an [air_parser::ast::Program], except that it has been
+/// been through semantic analysis and constant propagation.
+/// It is equivalent to an [air_parser::ast::Program], except that it has been
 /// translated into an algebraic graph representation, on which further analysis,
 /// optimization, and code generation are performed.
 #[derive(Debug, Spanned)]
@@ -52,7 +52,7 @@ impl Mir {
     ///
     /// An empty [Mir] is meaningless until it has been populated with
     /// constraints and associated metadata. This is typically done by converting
-    /// an [air_parser::ast::Program] to this struct using the [crate::passes::AstToAir]
+    /// an [air_parser::ast::Program] to this struct using the [crate::passes::AstToMir]
     /// translation pass.
     pub fn new(name: Identifier) -> Self {
         Self {

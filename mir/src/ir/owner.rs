@@ -1,9 +1,17 @@
 use miden_diagnostics::{SourceSpan, Spanned};
 use std::ops::Deref;
 
-use crate::ir::{BackLink, Child, Link, Op, Parent, Root};
+use crate::ir::{BackLink, Child, Link, Node, Op, Parent, Root};
 
-/// The nodes that can own Op nodes
+/// The nodes that can own [Op] nodes
+/// The [Owner] enum does not own it's inner struct to avoid reference cycles,
+/// and hence uses a [BackLink] to refer to the inner [Op] or [Root]
+/// It is meant to be used as a singleton, stored in the inner struct of [Op] and [Root],
+/// so it can be updated to the correct variant when the inner struct is updated
+/// Note: The [None] variant is used to represent a [Owner] that:
+/// - is not yet initialized
+/// - no longer exists (due to its ref-count dropping to 0).
+///   We refer to those as "stale" nodes.
 #[derive(Clone, Eq, Debug, Spanned)]
 pub enum Owner {
     Function(BackLink<Root>),
@@ -114,6 +122,7 @@ impl Child for Owner {
 
 impl PartialEq for Owner {
     fn eq(&self, other: &Self) -> bool {
+        // We first convert the [BackLink] to an [Option<Link>] and compare those
         match (self, other) {
             (Owner::Function(lhs), Owner::Function(rhs)) => lhs.to_link() == rhs.to_link(),
             (Owner::Evaluator(lhs), Owner::Evaluator(rhs)) => lhs.to_link() == rhs.to_link(),
@@ -138,6 +147,7 @@ impl PartialEq for Owner {
 
 impl std::hash::Hash for Owner {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        // We first convert the [BackLink] to an [Option<Link>] and hash those
         match self {
             Owner::Function(f) => f.to_link().hash(state),
             Owner::Evaluator(e) => e.to_link().hash(state),
@@ -160,6 +170,8 @@ impl std::hash::Hash for Owner {
 }
 
 impl Link<Owner> {
+    /// Update the current node to the right variant of the new inner [Op] or [Root]
+    /// Note: Only meant to be used internally
     pub fn update_variant(&self) {
         let to_update;
         if let Some(op_inner_val) = self.as_op() {
@@ -194,6 +206,16 @@ impl Link<Owner> {
         *self.borrow_mut() = to_update;
     }
 
+    /// Check if the [Owner]'s inner [Op] or [Root] still exists
+    pub fn is_stale(&self) -> bool {
+        match self.as_root() {
+            Some(_) => false,
+            None => self.as_op().is_none(),
+        }
+    }
+
+    /// Try getting the current [Owner]'s [Root] variant
+    /// Returns None if the [Owner] is an [Op] variant or is stale
     pub fn as_root(&self) -> Option<Link<Root>> {
         match self.borrow().deref() {
             Owner::Function(f) => f.to_link(),
@@ -214,6 +236,8 @@ impl Link<Owner> {
             Owner::None(_) => None,
         }
     }
+    /// Try getting the current [Owner]'s [Op] variant
+    /// Returns None if the [Owner] is a [Root] variant or is stale
     pub fn as_op(&self) -> Option<Link<Op>> {
         match self.borrow().deref() {
             Owner::Function(_) => None,
@@ -234,9 +258,19 @@ impl Link<Owner> {
             Owner::None(_) => None,
         }
     }
+    /// Get the current [Owner]'s [Node] variant
+    /// returns [Node::None] if the [Owner] is stale
+    pub fn as_node(&self) -> Link<Node> {
+        match self.as_root() {
+            Some(root) => root.as_node(),
+            None => self.as_op().map(|op| op.as_node()).unwrap_or_default(),
+        }
+    }
 }
 
 impl BackLink<Owner> {
+    /// Get the pointer of the inner struct of the [Op] or [Root]
+    /// referenced by the current [Owner]
     pub fn get_ptr(&self) -> usize {
         self.to_link()
             .map(|l| match l.borrow().deref() {

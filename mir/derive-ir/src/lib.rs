@@ -6,15 +6,15 @@ use proc_macro::TokenStream;
 use syn::{parse_macro_input, DeriveInput};
 
 ///
-/// Derive the `Builder` trait for a struct.
+/// Derive the [Builder] trait for a struct.
 /// Generates a type-level state machine for transitioning between states.
 ///
 /// States correspond to which fields have been set or not.
 /// It takes into account the type of the fields.
 /// The following types are treated as optional fields:
-/// - `BackLink<T>`
-/// - `Vec<T>`
-/// - `Link<Vec<T>>`
+/// - [BackLink<T>]
+/// - [Vec<T>]
+/// - [Link<Vec<T>>]
 ///
 /// For example, given the following struct:
 /// ```ignore
@@ -74,6 +74,9 @@ use syn::{parse_macro_input, DeriveInput};
 ///
 /// We then generate an implementation for each state,
 /// with a method for each field., which transitions to the next state.
+/// The [enum_wrapper] attribute is used to automatically wrap the struct in a Link<enum_wrapper>
+/// to reduce boilerplate.
+/// The only supported [enum_wrapper]s are `Op` and `Root`.
 ///
 /// The following API is generated:
 /// ```ignore
@@ -98,16 +101,17 @@ use syn::{parse_macro_input, DeriveInput};
 ///     .f(f1.clone())
 ///     .build();
 /// assert_eq!(foo.borrow().deref(),
-///     &Foo {
-///         a: a.clone().into(),
-///         b: vec![b0.into(), b1.into()],
-///         c,
-///         d,
-///         e: vec![e0, e1],
-///         f: Link::new(vec![f0, f1]),
-///     });
+///     &Op::Foo(
+///         Foo {
+///             a: a.clone().into(),
+///             b: vec![b0.into(), b1.into()],
+///             c,
+///             d,
+///             e: vec![e0, e1],
+///             f: Link::new(vec![f0, f1]),
+///         }
+///     );
 /// ```
-///
 #[proc_macro_derive(Builder, attributes(enum_wrapper))]
 pub fn derive_builder(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);

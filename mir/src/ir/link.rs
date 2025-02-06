@@ -4,6 +4,7 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use std::rc::{Rc, Weak};
 
+/// A wrapper around a `Rc<RefCell<T>>` to allow custom trait implementations.
 pub struct Link<T>
 where
     T: Sized,
@@ -17,21 +18,22 @@ impl<T> Link<T> {
             link: Rc::new(RefCell::new(data)),
         }
     }
+    /// Returns a `std::cell::Ref` to the inner value.
     pub fn borrow(&self) -> std::cell::Ref<T> {
         self.link.borrow()
     }
+    /// Returns a `std::cell::RefMut` to the inner value.
     pub fn borrow_mut(&self) -> std::cell::RefMut<T> {
         self.link.borrow_mut()
     }
+    /// Updates the inner value with the value of another `Link` of the same type.
     pub fn update(&self, other: &Self)
     where
-        T: Clone + Debug,
+        T: Clone,
     {
-        //eprintln!("update:\n    {:#?}\n  ->{:#?}", self, other);
-        //eprintln!("old_ptr: {}", self.get_ptr());
         *self.borrow_mut() = other.borrow().clone();
-        //eprintln!("new_ptr: {}", self.get_ptr());
     }
+    /// Returns the raw pointer of the inner `RefCell`.
     pub fn get_ptr(&self) -> usize {
         Rc::as_ptr(&self.link) as usize
     }
@@ -76,12 +78,15 @@ impl<T> From<T> for Link<T> {
     }
 }
 
+/// Converts a `BackLink` into a `Link` by upgrading the weak reference.
+/// Note: This will panic if the weak reference is invalid.
 impl<T> From<BackLink<T>> for Link<T> {
     fn from(value: BackLink<T>) -> Self {
         value.to_link().unwrap()
     }
 }
 
+/// Converts a `Rc<RefCell<T>>` into a `Link`.
 impl<T> From<Rc<RefCell<T>>> for Link<T> {
     fn from(value: Rc<RefCell<T>>) -> Self {
         Self { link: value }
@@ -97,6 +102,17 @@ where
     }
 }
 
+impl<T> Hash for Link<T>
+where
+    T: Hash,
+{
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.link.borrow().hash(state)
+    }
+}
+
+/// A wrapper around a `Option<Weak<RefCell<T>>>` to allow custom trait implementations.
+/// Used instead of `Link` where a `Link` would create a cyclIc reference.
 pub struct BackLink<T> {
     pub link: Option<Weak<RefCell<T>>>,
 }
@@ -148,6 +164,7 @@ impl<T> PartialEq for BackLink<T> {
 
 impl<T> Eq for BackLink<T> {}
 
+/// Converts a `Link` into a `BackLink` by downgrading the strong reference.
 impl<T> From<Link<T>> for BackLink<T> {
     fn from(parent: Link<T>) -> Self {
         Self {
@@ -156,15 +173,7 @@ impl<T> From<Link<T>> for BackLink<T> {
     }
 }
 
-impl<T> Hash for Link<T>
-where
-    T: Hash,
-{
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.link.borrow().hash(state)
-    }
-}
-
+/// Converts a `Rc<RefCell<T>>` into a `BackLink`.
 impl<T> From<Rc<RefCell<T>>> for BackLink<T> {
     fn from(parent: Rc<RefCell<T>>) -> Self {
         Self {

@@ -12,7 +12,7 @@ use air_parser::ast::QualifiedIdentifier;
 /// The constraints graph for the Mir.
 ///
 /// We store constraints (boundary and integrity), as well as function and evaluator definitions.
-/// 
+///
 #[derive(Debug, Default)]
 pub struct Graph {
     functions: BTreeMap<QualifiedIdentifier, Link<Root>>,

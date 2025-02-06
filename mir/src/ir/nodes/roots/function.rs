@@ -1,11 +1,15 @@
 use crate::ir::{Builder, Link, Node, Op, Owner, Parent, Root};
 use miden_diagnostics::{SourceSpan, Spanned};
 
+/// A MIR Root to represent a Function definition
 #[derive(Default, Clone, PartialEq, Eq, Debug, Hash, Builder, Spanned)]
 #[enum_wrapper(Root)]
 pub struct Function {
-    pub parameters: Vec<Link<Op>>, // Parameter
-    pub return_type: Link<Op>,     // Parameter
+    // Parameters of the function: Parameter
+    pub parameters: Vec<Link<Op>>,
+    // Return type of the function: Parameter
+    pub return_type: Link<Op>,
+    // Operations contained in the function
     pub body: Link<Vec<Link<Op>>>,
     pub _node: Option<Link<Node>>,
     pub _owner: Option<Link<Owner>>,

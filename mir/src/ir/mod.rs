@@ -18,6 +18,7 @@ pub use owner::Owner;
 /// This is used with the Child trait to allow for easy traversal and manipulation of the graph
 pub trait Parent {
     type Child;
+    /// Get a view of the children of the current node.
     fn children(&self) -> Link<Vec<Link<Self::Child>>>;
 }
 
@@ -48,8 +49,11 @@ where
 /// This is used with the Parent trait to allow for easy traversal and manipulation of the graph
 pub trait Child: Clone + Into<Link<Self>> + PartialEq {
     type Parent;
+    /// Get a view of the parents of the current node.
     fn get_parents(&self) -> Vec<BackLink<Self::Parent>>;
+    /// Add a parent to the current node
     fn add_parent(&mut self, parent: Link<Self::Parent>);
+    /// Remove a parent from the current node
     fn remove_parent(&mut self, parent: Link<Self::Parent>);
 }
 

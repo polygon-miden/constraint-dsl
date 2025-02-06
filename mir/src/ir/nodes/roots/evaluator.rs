@@ -2,10 +2,14 @@ use miden_diagnostics::{SourceSpan, Spanned};
 
 use crate::ir::{Builder, Link, Node, Op, Owner, Parent, Root};
 
+/// A MIR Root to represent a Evaluator definition
 #[derive(Default, Clone, PartialEq, Eq, Debug, Hash, Builder, Spanned)]
 #[enum_wrapper(Root)]
 pub struct Evaluator {
+    // Parameters of the evaluator.
+    // each parameter Identifier in the ast corresponds to a Vec<Parameter>
     pub parameters: Vec<Vec<Link<Op>>>,
+    // Operations contained in the Evaluator
     pub body: Link<Vec<Link<Op>>>,
     pub _node: Option<Link<Node>>,
     pub _owner: Option<Link<Owner>>,

@@ -28,7 +28,6 @@ use crate::{
 ///
 /// TODO:
 /// - [ ] Implement diagnostics for better error handling
-
 pub struct AstToMir<'a> {
     diagnostics: &'a DiagnosticsHandler,
 }

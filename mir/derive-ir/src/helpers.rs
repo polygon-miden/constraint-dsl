@@ -1,12 +1,17 @@
 use prettyplease::unparse;
 
 #[allow(unused)]
+/// Uses prettyplease to format the code.
+/// If prettyplease can't format the code, it will panic in all cases.
+/// If that happens, use default_fmt instead which is less pretty but more reliable.
 pub fn fmt(code: proc_macro2::TokenStream) -> String {
     let file = syn::parse_file(&code.to_string().replace(" } ", "\n}")).unwrap();
     unparse(&file)
 }
+
 #[allow(unused)]
-/// if fmt can't format the code, use this instead
+/// A simple formatter that just inserts newlines and indentation in most cases.
+/// Does not work on unbalanced scopes inside of strings and other edge cases.
 pub fn default_fmt(s: &proc_macro2::TokenStream) -> String {
     let s = s
         .to_string()

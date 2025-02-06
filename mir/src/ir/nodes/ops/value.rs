@@ -3,8 +3,8 @@ use miden_diagnostics::{SourceSpan, Spanned};
 
 use crate::ir::{BackLink, Builder, Child, Link, Node, Op, Owner};
 
-/// A MIR operation to represent a known value, `value`
-///
+/// A MIR operation to represent a known value, [Value]
+/// Wraps a [SpannedMirValue] to represent a known value in the [MIR]
 #[derive(Default, Clone, PartialEq, Eq, Debug, Hash, Builder, Spanned)]
 #[enum_wrapper(Op)]
 pub struct Value {

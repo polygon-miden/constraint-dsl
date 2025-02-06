@@ -9,6 +9,7 @@ mod for_op;
 mod if_op;
 mod matrix;
 mod mul;
+mod parameter;
 mod sub;
 mod value;
 mod vector;
@@ -24,6 +25,7 @@ pub use for_op::For;
 pub use if_op::If;
 pub use matrix::Matrix;
 pub use mul::Mul;
+pub use parameter::Parameter;
 pub use sub::Sub;
 pub use value::{
     ConstantValue, MirType, MirValue, PeriodicColumnAccess, PublicInputAccess, SpannedMirValue,
