@@ -29,19 +29,22 @@ use syn::{parse_macro_input, DeriveInput};
 ///     f: Link<Vec<Link<Op>>>,
 /// }
 /// ```
+/// 
 /// We now isolate the optional fields:
 /// - `a: BackLink<Owner>`
 /// - `b: Vec<BackLink<Owner>>`
 /// - `e: Vec<Link<Op>>`
 /// - `f: Link<Vec<Link<Op>>>`
-/// and the required fields:
+///   and the required fields:
 /// - `c: i32`
 /// - `d: Link<Op>`
+/// 
 /// We generate an initial state `FooBuilder0` with no fields set,
 /// except for the optional fields which are set to their default values.
 /// ```ignore
 /// let initial_state = [true, true, false, false, true, true];
 /// ```
+/// 
 /// We then generate a state with each of the required fields set,
 /// and every possible combination of those field states.
 /// We sort the states by the number of fields set, then by leftmost true bits.
@@ -55,6 +58,7 @@ use syn::{parse_macro_input, DeriveInput};
 ///     [true, true, true,  true,  true, true], // 3
 /// ];
 /// ```
+/// 
 /// We generate a transition table for each state,
 /// which maps from the current state to the next state.
 /// rows are indexed by the current state,
@@ -66,9 +70,10 @@ use syn::{parse_macro_input, DeriveInput};
 ///     /* 2: */ [2, 2, 3, 2, 2, 2],
 ///     /* 3: */ [3, 3, 3, 3, 3, 3],
 /// ];
+/// ```
+/// 
 /// We then generate an implementation for each state,
 /// with a method for each field., which transitions to the next state.
-/// ```
 ///
 /// The following API is generated:
 /// ```ignore
@@ -102,6 +107,7 @@ use syn::{parse_macro_input, DeriveInput};
 ///         f: Link::new(vec![f0, f1]),
 ///     });
 /// ```
+/// 
 #[proc_macro_derive(Builder, attributes(enum_wrapper))]
 pub fn derive_builder(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
