@@ -2,14 +2,14 @@ use miden_diagnostics::{SourceSpan, Spanned};
 
 use crate::ir::{BackLink, Builder, Child, Link, Node, Op, Owner, Parent};
 
-/// A MIR operation to represent list comprehensions. 
-/// 
-/// Notes: 
+/// A MIR operation to represent list comprehensions.
+///
+/// Notes:
 /// - the For operation will be unrolled into a Vector during the Unrolling pass,
 ///   each element of the Vector will be the result of the expression expr` for the given iterators indices
 /// - Optionally, a selector can be provided (useful to represent conditional enforcements)
 /// - After the Unrolling pass, no For ops should be present in the graph
-/// 
+///
 #[derive(Default, Clone, PartialEq, Eq, Debug, Hash, Builder, Spanned)]
 #[enum_wrapper(Op)]
 pub struct For {

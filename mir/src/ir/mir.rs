@@ -19,12 +19,13 @@ use super::Graph;
 /// optimization, and code generation are performed.
 #[derive(Debug, Spanned)]
 pub struct Mir {
-    /// The name of the [air_parser::ast::Program] from which this IR was derived
+    /// The name of the [air_parser::ast::Program] from which this MIR was derived
     #[span]
     pub name: Identifier,
-
+    /// The trace columns referenced by this program.
+    ///
+    /// These are taken straight from the [air_parser::ast::Program] without modification.
     pub trace_columns: Vec<TraceSegment>,
-
     /// The periodic columns referenced by this program.
     ///
     /// These are taken straight from the [air_parser::ast::Program] without modification.
@@ -64,18 +65,10 @@ impl Mir {
         }
     }
 
-    /// Returns the name of the [air_parser::ast::Program] this [Air] was derived from, as a `str`
+    /// Returns the name of the [air_parser::ast::Program] this [Mir] was derived from, as a `str`
     #[inline]
     pub fn name(&self) -> &str {
         self.name.as_str()
-    }
-
-    pub fn public_inputs(&self) -> impl Iterator<Item = &PublicInput> + '_ {
-        self.public_inputs.values()
-    }
-
-    pub fn periodic_columns(&self) -> impl Iterator<Item = &PeriodicColumn> + '_ {
-        self.periodic_columns.values()
     }
 
     /// Return a reference to the raw [AlgebraicGraph] corresponding to the constraints

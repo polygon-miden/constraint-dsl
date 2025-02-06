@@ -4,7 +4,7 @@ use miden_diagnostics::{SourceSpan, Spanned};
 use crate::ir::{BackLink, Builder, Child, Link, Node, Op, Owner};
 
 /// A MIR operation to represent a known value, `value`
-/// 
+///
 #[derive(Default, Clone, PartialEq, Eq, Debug, Hash, Builder, Spanned)]
 #[enum_wrapper(Op)]
 pub struct Value {

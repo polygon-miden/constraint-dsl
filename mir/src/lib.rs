@@ -9,6 +9,7 @@ pub use self::codegen::CodeGenerator;
 
 use miden_diagnostics::{Diagnostic, ToDiagnostic};
 
+/// Error type that can be returned during the Mir passes
 #[derive(Debug, thiserror::Error)]
 pub enum CompileError {
     #[error(transparent)]
@@ -20,11 +21,11 @@ pub enum CompileError {
 }
 
 impl ToDiagnostic for CompileError {
+    /// Helper to convert a [CompileError] into a [Diagnostic]
     fn to_diagnostic(self) -> Diagnostic {
         match self {
             Self::Parse(err) => err.to_diagnostic(),
             Self::SemanticAnalysis(err) => err.to_diagnostic(),
-            //Self::InvalidConstraint(err) => Diagnostic::error().with_message(err.to_string()),
             Self::Failed => Diagnostic::error().with_message(self.to_string()),
         }
     }

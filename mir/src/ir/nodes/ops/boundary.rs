@@ -4,9 +4,9 @@ use miden_diagnostics::{SourceSpan, Spanned};
 use std::hash::Hash;
 
 /// A MIR operation to represent bounding a given op, `expr`, to access either the first or last row
-/// 
+///
 /// Note: Boundary ops are only valid to describe boundary constraints, not integrity constraints
-/// 
+///
 #[derive(Clone, PartialEq, Eq, Debug, Builder, Spanned)]
 #[enum_wrapper(Op)]
 pub struct Boundary {

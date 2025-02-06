@@ -104,7 +104,6 @@ impl Compiler {
             .and_then(|ast| {
                 let mut pipeline =
                     air_parser::transforms::ConstantPropagation::new(&self.diagnostics)
-                        //.chain(air_parser::transforms::Inlining::new(&self.diagnostics))
                         .chain(crate::passes::AstToMir::new(&self.diagnostics))
                         .chain(crate::passes::Inlining::new(&self.diagnostics))
                         .chain(crate::passes::Unrolling::new(&self.diagnostics));

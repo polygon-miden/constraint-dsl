@@ -1,4 +1,4 @@
-/// This trait should be implemented on types which handle generating code from AirScript IR
+/// This trait should be implemented on types which handle generating code from AirScript MIR
 pub trait CodeGenerator {
     /// The type of the artifact produced by this codegen backend
     type Output;
