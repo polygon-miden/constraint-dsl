@@ -13,6 +13,12 @@ mod source_sections;
 mod trace;
 mod variables;
 
+/// Note: Tests on this module are currently redundant with the tests in the `air-ir` crate.
+///
+/// Indeed, these tests ensure that we can compile and translate AirScript code into AIR, with both pipelines (with and without MIR),
+/// so if these tests pass, we can produce a Mir.
+///
+/// However, instead of removing the following tests, we should ensure the resulting Mir graph is consistent with what is expected, as well as test each pass.
 pub use crate::CompileError;
 
 use std::sync::Arc;
