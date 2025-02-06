@@ -3,7 +3,41 @@ use miden_diagnostics::{SourceSpan, Spanned};
 
 use crate::ir::{BackLink, Builder, Child, Link, Node, Op, Owner};
 
-/// Represents a scalar value in the [MIR]
+/// A MIR operation to represent a known value, `value`
+/// 
+#[derive(Default, Clone, PartialEq, Eq, Debug, Hash, Builder, Spanned)]
+#[enum_wrapper(Op)]
+pub struct Value {
+    pub parents: Vec<BackLink<Owner>>,
+    #[span]
+    pub value: SpannedMirValue,
+    pub _node: Option<Link<Node>>,
+}
+
+impl Value {
+    pub fn create(value: SpannedMirValue) -> Link<Op> {
+        Op::Value(Self {
+            value,
+            ..Default::default()
+        })
+        .into()
+    }
+}
+
+impl Child for Value {
+    type Parent = Owner;
+    fn get_parents(&self) -> Vec<BackLink<Self::Parent>> {
+        self.parents.clone()
+    }
+    fn add_parent(&mut self, parent: Link<Self::Parent>) {
+        self.parents.push(parent.into());
+    }
+    fn remove_parent(&mut self, parent: Link<Self::Parent>) {
+        self.parents.retain(|p| *p != parent.clone().into());
+    }
+}
+
+/// Represents a known value in the [MIR]
 ///
 /// Values are either constant, or evaluated at runtime using the context
 /// provided to an AirScript program (i.e. random values, public inputs, etc.).
@@ -11,12 +45,7 @@ use crate::ir::{BackLink, Builder, Child, Link, Node, Op, Owner};
 pub enum MirValue {
     /// A constant value.
     Constant(ConstantValue),
-    /// Following to update from the ast::BindingType enum
-    /// Goal: To represent the different types of values that can be stored in the MIR
-    /// (Scalar, vectors and matrices)
-    ///
     /// A reference to a specific column in the trace segment, with an optional offset.
-    ///
     TraceAccess(TraceAccess),
     /// A reference to a periodic column
     ///
@@ -26,11 +55,9 @@ pub enum MirValue {
     PublicInput(PublicInputAccess),
     /// A reference to the `random_values` array, specifically the element at the given index
     RandomValue(usize),
-    /// Vector version of the above, if needed
-    /// (basically the same but with a size argument to allow for continuous access)
-    /// We should delete the <TraceAccess> and <RandomValue> variants if we decide to use only the most generic variants below
+    /// A binding to a set of consecutive trace columns of a given size
     TraceAccessBinding(TraceAccessBinding),
-    ///RandomValueBinding is a binding to a range of random values
+    /// A binding to a range of random values
     RandomValueBinding(RandomValueBinding),
 }
 
@@ -143,37 +170,5 @@ impl Default for SpannedMirValue {
             value: MirValue::Constant(ConstantValue::Felt(0)),
             span: Default::default(),
         }
-    }
-}
-
-#[derive(Default, Clone, PartialEq, Eq, Debug, Hash, Builder, Spanned)]
-#[enum_wrapper(Op)]
-pub struct Value {
-    pub parents: Vec<BackLink<Owner>>,
-    #[span]
-    pub value: SpannedMirValue,
-    pub _node: Option<Link<Node>>,
-}
-
-impl Value {
-    pub fn create(value: SpannedMirValue) -> Link<Op> {
-        Op::Value(Self {
-            value,
-            ..Default::default()
-        })
-        .into()
-    }
-}
-
-impl Child for Value {
-    type Parent = Owner;
-    fn get_parents(&self) -> Vec<BackLink<Self::Parent>> {
-        self.parents.clone()
-    }
-    fn add_parent(&mut self, parent: Link<Self::Parent>) {
-        self.parents.push(parent.into());
-    }
-    fn remove_parent(&mut self, parent: Link<Self::Parent>) {
-        self.parents.retain(|p| *p != parent.clone().into());
     }
 }

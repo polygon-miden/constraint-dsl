@@ -1,6 +1,10 @@
 use crate::ir::{BackLink, Builder, Child, Link, Node, Op, Owner, Parent};
 use miden_diagnostics::{SourceSpan, Spanned};
 
+/// A MIR operation to represent the exponentiation of a MIR op, `lhs` by another, `rhs`
+/// 
+/// Note: `rhs` should be a constant integer after all the passes
+/// 
 #[derive(Default, Clone, PartialEq, Eq, Debug, Hash, Builder, Spanned)]
 #[enum_wrapper(Op)]
 pub struct Exp {

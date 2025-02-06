@@ -1,6 +1,8 @@
 use crate::ir::{BackLink, Builder, Child, Link, Node, Op, Owner, Parent};
 use miden_diagnostics::{SourceSpan, Spanned};
 
+/// A MIR operation to represent the multiplication of two MIR ops, `lhs` and `rhs`
+/// 
 #[derive(Default, Clone, PartialEq, Eq, Debug, Hash, Builder, Spanned)]
 #[enum_wrapper(Op)]
 pub struct Mul {

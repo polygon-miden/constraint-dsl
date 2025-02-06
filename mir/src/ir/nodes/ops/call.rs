@@ -1,6 +1,12 @@
 use crate::ir::{BackLink, Builder, Child, Link, Node, Op, Owner, Parent, Root};
 use miden_diagnostics::{SourceSpan, Spanned};
 
+/// A MIR operation to represent a call to a given function, a `Root` that represents either a `Function` or an `Evaluator`
+/// 
+/// Notes: 
+/// - The `arguments` are the arguments to the function call, and will replace the encountered `Parameter` nodes in the function's body by the corresponding argument during the Inlining pass
+/// - After the Inlining pass, no Call ops should be present in the graph
+/// 
 #[derive(Default, Clone, PartialEq, Eq, Debug, Hash, Builder, Spanned)]
 #[enum_wrapper(Op)]
 pub struct Call {
@@ -29,6 +35,7 @@ impl Call {
 impl Parent for Call {
     type Child = Op;
     fn children(&self) -> Link<Vec<Link<Self::Child>>> {
+        // Here, we do not include the function as a child to make it easier to implement the visitor pattern for the passes
         self.arguments.clone()
     }
 }
