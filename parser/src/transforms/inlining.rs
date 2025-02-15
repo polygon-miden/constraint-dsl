@@ -704,7 +704,7 @@ impl<'a> Inlining<'a> {
                     }
                     // If the current statement is a `let`-tree, we need to generate a new `let` at
                     // the bottom of the tree, which binds the result expression as the value of the
-                    // generated `let`, and uses the accumualtor expression as the body
+                    // generated `let`, and uses the accumulator expression as the body
                     Statement::Let(ref mut wrapper) => {
                         with_let_result(self, &mut wrapper.body, move |_, value| {
                             let value = core::mem::replace(
