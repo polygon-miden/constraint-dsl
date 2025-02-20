@@ -4,9 +4,9 @@ use air_parser::ast::{TraceColumnIndex, TraceSegmentId};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TraceAccess {
     /// The trace segment being accessed
-    pub segment: TraceSegmentId,
+    pub segment: TraceSegmentId, // 0 is main trace, 1 is aux trace
     /// The index of the first column at which the access begins
-    pub column: TraceColumnIndex,
+    pub column: TraceColumnIndex, // 0 now, 1 next
     /// The offset from the current row.
     ///
     /// Defaults to 0, which indicates no offset/the current row.

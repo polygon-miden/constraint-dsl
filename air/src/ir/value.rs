@@ -9,16 +9,16 @@ pub enum Value {
     /// A constant value.
     Constant(u64),
     /// A reference to a specific column in the trace segment, with an optional offset.
-    TraceAccess(TraceAccess),
+    TraceAccess(TraceAccess), // first, respect order
     /// A reference to a periodic column
     ///
     /// The value this corresponds to is determined by the current row of the trace.
     PeriodicColumn(PeriodicColumnAccess),
     /// A reference to a specific element of a given public input
-    PublicInput(PublicInputAccess),
+    PublicInput(PublicInputAccess), // TODO example for boundary contraint, second
     /// A reference to the `random_values` array, specifically the element at the given index
-    RandomValue(usize),
-}
+    RandomValue(usize), //only in the aux, third, not the alpha
+} // alpha 4th //z TODO // constant 5th after all the reads
 
 /// Represents an access of a [PeriodicColumn], similar in nature to [TraceAccess]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

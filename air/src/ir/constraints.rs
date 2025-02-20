@@ -166,7 +166,7 @@ pub enum ConstraintDomain {
     /// For boundary constraints which apply to the first row
     FirstRow,
     /// For boundary constraints which apply to the last row
-    LastRow,
+    LastRow, // This is to split the boundary
     /// For constraints which apply to every row of the trace
     ///
     /// This is used for validity constraints
