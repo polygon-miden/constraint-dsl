@@ -25,7 +25,7 @@ impl<'a> MirToAir<'a> {
         Self { diagnostics }
     }
 }
-impl<'p> Pass for MirToAir<'p> {
+impl Pass for MirToAir<'_> {
     type Input<'a> = Mir;
     type Output<'a> = Air;
     type Error = CompileError;
@@ -92,7 +92,7 @@ fn enf_to_scalar(mir_node: &Link<Op>) -> Link<Op> {
     }
 }
 
-impl<'a> AirBuilder<'a> {
+impl AirBuilder<'_> {
     // Uses square and multiply algorithm to expand the exp into a series of multiplications
     fn expand_exp(&mut self, lhs: NodeIndex, rhs: u64) -> NodeIndex {
         match rhs {

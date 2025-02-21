@@ -19,7 +19,7 @@ impl<'a> AstToAir<'a> {
         Self { diagnostics }
     }
 }
-impl<'p> Pass for AstToAir<'p> {
+impl Pass for AstToAir<'_> {
     type Input<'a> = ast::Program;
     type Output<'a> = Air;
     type Error = CompileError;
@@ -74,7 +74,7 @@ struct AirBuilder<'a> {
     trace_columns: Vec<ast::TraceSegment>,
     bindings: LexicalScope<Identifier, MemoizedBinding>,
 }
-impl<'a> AirBuilder<'a> {
+impl AirBuilder<'_> {
     fn build_boundary_constraint(&mut self, bc: &ast::Statement) -> Result<(), CompileError> {
         match bc {
             ast::Statement::Enforce(ast::ScalarExpr::Binary(ast::BinaryExpr {
